@@ -1,11 +1,10 @@
 package mk.ukim.finki.emt.lab.model.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @Entity
@@ -19,6 +18,9 @@ public class Country {
     private String name;
 
     private String continent;
+
+    @OneToMany(mappedBy = "country", cascade = CascadeType.ALL)
+    private List<Author> authors;
 
     public Country(String name, String continent) {
         this.name = name;

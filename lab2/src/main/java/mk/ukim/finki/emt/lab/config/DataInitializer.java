@@ -3,7 +3,7 @@ package mk.ukim.finki.emt.lab.config;
 import jakarta.annotation.PostConstruct;
 
 import mk.ukim.finki.emt.lab.model.domain.User;
-//import mk.ukim.finki.emt.lab.repository.UserRepository;
+import mk.ukim.finki.emt.lab.repository.UserRepository;
 import mk.ukim.finki.emt.lab.service.domain.AuthorService;
 import mk.ukim.finki.emt.lab.service.domain.BookService;
 import mk.ukim.finki.emt.lab.model.enums.Category;
@@ -18,19 +18,19 @@ public class DataInitializer {
     private final AuthorService authorService;
     private final BookService bookService;
     private final CountryService countryService;
-//    private final UserRepository userRepository;
-//    private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
 
     public DataInitializer(AuthorService authorService, BookService bookService, CountryService countryService
-//                           ,UserRepository userRepository,
-//                           PasswordEncoder passwordEncoder
+                           ,UserRepository userRepository,
+                           PasswordEncoder passwordEncoder
     ) {
         this.authorService = authorService;
         this.bookService = bookService;
         this.countryService = countryService;
-//        this.userRepository = userRepository;
-//        this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
 
     }
 
@@ -60,21 +60,29 @@ public class DataInitializer {
             this.bookService.create("Book: " + i, this.randomize(i), this.authorService.listAll().get((i - 1) % 5).getId(), Long.parseLong("7"));
         }
 
-//        userRepository.save(new User(
-//                "user",
-//                passwordEncoder.encode("user"),
-//                "Irena",
-//                "Latinovska",
-//                Role.USER
-//        ));
-//
-//        userRepository.save(new User(
-//                "librarian",
-//                passwordEncoder.encode("librarian"),
-//                "BangTan",
-//                "Sonyeondan",
-//                Role.LIBRARIAN
-//        ));
+        userRepository.save(new User(
+                "user",
+                passwordEncoder.encode("user"),
+                "Irena",
+                "Latinovska",
+                Role.ROLE_USER
+        ));
+
+        userRepository.save(new User(
+                "librarian",
+                passwordEncoder.encode("librarian"),
+                "BangTan",
+                "Sonyeondan",
+                Role.ROLE_LIBRARIAN
+        ));
+
+        userRepository.save(new User(
+                "admin",
+                passwordEncoder.encode("admin"),
+                "BangTan",
+                "Sonyeondan",
+                Role.ROLE_ADMIN
+        ));
 
     }
 }

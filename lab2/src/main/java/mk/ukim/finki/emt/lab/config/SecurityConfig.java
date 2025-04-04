@@ -22,143 +22,139 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 
+//@Configuration
+//@EnableWebSecurity
+//@EnableMethodSecurity
+//public class SecurityConfig {
+//
+//    /**
+//     * Remove the implementation of the following method and replace it with your own code to implement the security requests.
+//     * If you do not wish to implement the security requests, leave this code as it is.
+//     */
+//
+//    private final PasswordEncoder passwordEncoder;
+////    private final CustomUsernamePasswordAuthenticationProvider authenticationProvider;
+//
+//
+//    public SecurityConfig(PasswordEncoder passwordEncoder) {
+//        this.passwordEncoder = passwordEncoder;
+////        this.authenticationProvider = authenticationProvider;
+//        ;
+//    }
+//
+//    @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//
+//        http
+//                .csrf(AbstractHttpConfigurer::disable)
+//                .headers((headers) -> headers
+//                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+//                )
+//                .authorizeHttpRequests((requests) -> requests
+//                          .requestMatchers("/api/books", "/api/countries", "/api/authors").permitAll()
+//                          .requestMatchers("/h2/**").hasAnyRole("ADMIN", "LIBRARIAN")
+//                          .requestMatchers("/api/books/**", "/api/countries/**", "/api/authors/**").hasAnyRole("ADMIN", "LIBRARIAN")//.hasRole("LIBRARIAN")
+//                          .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasAnyRole("ADMIN", "LIBRARIAN")//.hasRole("LIBRARIAN")
+//
+//                )
+//                .formLogin((form) -> form
+//                        .permitAll()
+//                        .failureUrl("/login?error=BadCredentials")
+//                        .defaultSuccessUrl("/swagger-ui/index.html", true)
+//                )
+//                .logout((logout) -> logout
+//                        .logoutUrl("/logout")
+//                        .clearAuthentication(true)
+//                        .invalidateHttpSession(true)
+//                        .deleteCookies("JSESSIONID")
+//                        .logoutSuccessUrl("/")
+//                );
+//
+//
+//        return http.build();
+//    }
+//
+//    // In Memory Authentication
+//        @Bean
+//    public UserDetailsService userDetailsService() {
+//        UserDetails user1 = User.builder()
+//                .username("user")
+//                .password(passwordEncoder.encode("user"))
+//                .roles("USER")
+//                .build();
+//        UserDetails admin = User.builder()
+//                .username("admin")
+//                .password(passwordEncoder.encode("admin"))
+//                .roles("ADMIN")
+//                .build();
+//            UserDetails librarian = User.builder()
+//                    .username("librarian")
+//                    .password(passwordEncoder.encode("librarian"))
+//                    .roles("LIBRARIAN")
+//                    .build();
+//
+//
+//        return new InMemoryUserDetailsManager(user1, admin, librarian);
+//    }}
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    /**
-     * Remove the implementation of the following method and replace it with your own code to implement the security requests.
-     * If you do not wish to implement the security requests, leave this code as it is.
-     */
+    private final CustomUsernamePasswordAuthenticationProvider authenticationProvider;
 
-    private final PasswordEncoder passwordEncoder;
-//    private final CustomUsernamePasswordAuthenticationProvider authenticationProvider;
+    public SecurityConfig(CustomUsernamePasswordAuthenticationProvider authenticationProvider) {
+        this.authenticationProvider = authenticationProvider;
+    }
 
-
-    public SecurityConfig(PasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
-//        this.authenticationProvider = authenticationProvider;
-        ;
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
+        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+        corsConfiguration.setAllowedHeaders(List.of("*"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfiguration);
+        return source;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .headers((headers) -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-                )
-                .authorizeHttpRequests((requests) -> requests
-                          .requestMatchers("/api/books", "/api/countries", "/api/authors").permitAll()
-                          .requestMatchers("/h2/**").hasAnyRole("ADMIN", "LIBRARIAN")
-                          .requestMatchers("/api/books/**", "/api/countries/**", "/api/authors/**", "api/wishlist/**").hasAnyRole("ADMIN", "LIBRARIAN")//.hasRole("LIBRARIAN")
-                          .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasAnyRole("ADMIN", "LIBRARIAN")//.hasRole("LIBRARIAN")
-
-                )
-                .formLogin((form) -> form
+        http.csrf(AbstractHttpConfigurer::disable)
+                .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(
+                        corsConfigurationSource()))
+                .authorizeHttpRequests(requests -> requests.requestMatchers(
+                        "/api/**"
+                ).permitAll().anyRequest().hasRole("ADMIN"))
+                .formLogin((form) -> form.loginProcessingUrl(
+                                "/api/user/login")
                         .permitAll()
-                        .failureUrl("/login?error=BadCredentials")
-                        .defaultSuccessUrl("/swagger-ui/index.html", true)
-                )
-                .logout((logout) -> logout
-                        .logoutUrl("/logout")
+                        .failureUrl("/api/user/login?error=BadCredentials")
+                        .defaultSuccessUrl(
+                                "/swagger-ui/index.html",
+                                true
+                        ))
+                .logout((logout) -> logout.logoutUrl("/api/user/logout")
                         .clearAuthentication(true)
-                        .invalidateHttpSession(true)
+                        .invalidateHttpSession(
+                                true)
                         .deleteCookies("JSESSIONID")
-                        .logoutSuccessUrl("/")
-                );
-
-
+                        .logoutSuccessUrl("/api/user/login"))
+                .exceptionHandling((ex) -> ex.accessDeniedPage(
+                        "/access_denied"));
         return http.build();
     }
 
-    // In Memory Authentication
-        @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails user1 = User.builder()
-                .username("user")
-                .password(passwordEncoder.encode("user"))
-                .roles("USER")
-                .build();
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password(passwordEncoder.encode("admin"))
-                .roles("ADMIN")
-                .build();
-            UserDetails librarian = User.builder()
-                    .username("librarian")
-                    .password(passwordEncoder.encode("librarian"))
-                    .roles("LIBRARIAN")
-                    .build();
+    @Bean
+    public AuthenticationManager authManager(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(
+                AuthenticationManagerBuilder.class);
+        authenticationManagerBuilder.authenticationProvider(authenticationProvider);
+        return authenticationManagerBuilder.build();
+    }
 
 
-        return new InMemoryUserDetailsManager(user1, admin, librarian);
-    }}
-
-//@Configuration
-//@EnableWebSecurity
-//@EnableMethodSecurity
-//public class WebSecurityConfig {
-//
-//    private final CustomUsernamePasswordAuthenticationProvider authenticationProvider;
-//
-//    public WebSecurityConfig(CustomUsernamePasswordAuthenticationProvider authenticationProvider) {
-//        this.authenticationProvider = authenticationProvider;
-//    }
-//
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration corsConfiguration = new CorsConfiguration();
-//        corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
-//        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
-//        corsConfiguration.setAllowedHeaders(List.of("*"));
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", corsConfiguration);
-//        return source;
-//    }
-//
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//        http.csrf(AbstractHttpConfigurer::disable)
-//                .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(
-//                        corsConfigurationSource()))
-//                .authorizeHttpRequests(requests -> requests.requestMatchers(
-//                        "/swagger-ui/**",
-//                        "/swagger-ui/index.html/api/loan",
-//                        "api/user/login",
-//                        "api/user/register"
-//                ).permitAll().anyRequest().hasRole("LIBRARIAN"))
-//                .formLogin((form) -> form.loginProcessingUrl(
-//                                "/api/user/login")
-//                        .permitAll()
-//                        .failureUrl("/api/user/login?error=BadCredentials")
-//                        .defaultSuccessUrl(
-//                                "/swagger-ui/index.html",
-//                                true
-//                        ))
-//                .logout((logout) -> logout.logoutUrl("/api/user/logout")
-//                        .clearAuthentication(true)
-//                        .invalidateHttpSession(
-//                                true)
-//                        .deleteCookies("JSESSIONID")
-//                        .logoutSuccessUrl("/api/user/login"))
-//                .exceptionHandling((ex) -> ex.accessDeniedPage(
-//                        "/access_denied"));
-//        return http.build();
-//    }
-//
-//    @Bean
-//    public AuthenticationManager authManager(HttpSecurity http) throws Exception {
-//        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(
-//                AuthenticationManagerBuilder.class);
-//        authenticationManagerBuilder.authenticationProvider(authenticationProvider);
-//        return authenticationManagerBuilder.build();
-//    }
-//
-//
-//
-//}
+}
 
 
